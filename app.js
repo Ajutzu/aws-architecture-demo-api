@@ -6,12 +6,14 @@ const PORT = 3000;
 
 // Middleware
 app.use(express.json());
+app.use(express.static("."));
 
-// Single endpoint
+app.set("view engine", "ejs");
+app.set("views", "./view");
+
+// Render home page
 app.get("/", (req, res) => {
-  res.json({
-    message: "API is running"
-  });
+  res.render("index");
 });
 
 // Start server
