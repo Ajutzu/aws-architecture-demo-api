@@ -13,8 +13,14 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "ejs": "^6.0.1",
+    "@aws-sdk/client-s3": "^3.1089.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "nodemon": "^3.1.14"
+    "express-rate-limit": "^8.6.0",
+    "helmet": "^8.3.0",
+    "multer": "^2.2.0",
+    "nodemon": "^3.1.14",
+    "pg": "^8.22.0"
   }
 }
