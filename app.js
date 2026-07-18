@@ -13,6 +13,9 @@ import postRoutes from "./routes/post.route.js";
 
 const app = express();
 
+// Trust CloudFront and Nginx Proxies
+app.set('trust proxy', 2);
+
 // Rate Limiter
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
