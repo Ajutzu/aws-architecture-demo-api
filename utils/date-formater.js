@@ -12,8 +12,13 @@ export const formatDate = (value) => {
 		return null;
 	}
 
-	return new Intl.DateTimeFormat("en-US", {
-		dateStyle: "medium",
-		timeStyle: "short",
-	}).format(dateValue);
+	try {
+		return new Intl.DateTimeFormat("en-US", {
+			dateStyle: "medium",
+			timeStyle: "short",
+		}).format(dateValue);
+	} catch (error) {
+		console.error("[date-formater:formatDate] Error:", error);
+		throw error;
+	}
 };

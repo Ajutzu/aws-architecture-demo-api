@@ -10,11 +10,16 @@ export const getImageUrl = (objectKey) => {
 		return null;
 	}
 
-	const baseUrl = appConfig.cloudFrontUrl.replace(/\/+$/, "");
+	try {
+		const baseUrl = String(appConfig.cloudFrontUrl || "").replace(/\/+$/, "");
 
-	if (!baseUrl) {
-		return objectKey;
+		if (!baseUrl) {
+			return objectKey;
+		}
+
+		return `${baseUrl}/${String(objectKey).replace(/^\/+/, "")}`;
+	} catch (error) {
+		console.error("[image-url:getImageUrl] Error:", error);
+		throw error;
 	}
-
-	return `${baseUrl}/${String(objectKey).replace(/^\/+/, "")}`;
 };

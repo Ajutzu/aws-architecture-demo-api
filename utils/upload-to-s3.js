@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { appConfig } from "../config/credential-holder.js";
+import { s3Client } from "../config/aws.js";
 
 // Santize the file name by removing the extension, converting to lowercase,
 // replacing non-alphanumeric characters with hyphens, and triming
@@ -33,14 +34,19 @@ export const uploadToS3 = async (file) => {
 
 	const fileKey = `posts/${Date.now()}-${randomUUID()}-${sanitizeFileName(file.originalname)}`;
 
-	await s3Client.send(
-		new PutObjectCommand({
-			Bucket: appConfig.awsBucketName,
-			Key: fileKey,
-			Body: file.buffer,
-			ContentType: file.mimetype,
-		})
-	);
+	try {
+		await s3Client.send(
+			new PutObjectCommand({
+				Bucket: appConfig.awsBucketName,
+				Key: fileKey,
+				Body: file.buffer,
+				ContentType: file.mimetype,
+			})
+		);
+	} catch (error) {
+		console.error("[upload-to-s3:uploadToS3] Error:", error);
+		throw error;
+	}
 
 	return fileKey;
 };

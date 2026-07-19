@@ -39,11 +39,21 @@ const buildErrorPayload = (message, details) => {
 //  message, and optional data and meta information.	
 
 export const sendSuccess = (res, statusCode, message, data, meta) => {
-	return res.status(statusCode).json(buildSuccessPayload(message, data, meta));
+	try {
+		return res.status(statusCode).json(buildSuccessPayload(message, data, meta));
+	} catch (error) {
+		console.error("[response:sendSuccess] Error:", error);
+		throw error;
+	}
 };
 
 // Sends a standardized error response with the provided status code, message, and optional details.
 
 export const sendError = (res, statusCode, message, details) => {
-	return res.status(statusCode).json(buildErrorPayload(message, details));
+	try {
+		return res.status(statusCode).json(buildErrorPayload(message, details));
+	} catch (error) {
+		console.error("[response:sendError] Error:", error);
+		throw error;
+	}
 };

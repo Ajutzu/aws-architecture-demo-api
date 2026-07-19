@@ -66,11 +66,13 @@ export const createPost = async (req, res, next) => {
 			post: formatPost(savedPost),
 		});
 	} catch (error) {
+		console.error("[post.controller:createPost] Error:", error);
+
 		if (uploadedImageKey) {
 			try {
 				await deleteFromS3(uploadedImageKey);
-			} catch {
-				// Ignore cleanup errors so the original failure is preserved.
+			} catch (cleanupError) {
+				console.error("[post.controller:createPost] Failed to clean up uploaded image:", cleanupError);
 			}
 		}
 
@@ -110,6 +112,7 @@ export const getPosts = async (req, res, next) => {
 			}
 		);
 	} catch (error) {
+		console.error("[post.controller:getPosts] Error:", error);
 		return next(error);
 	}
 };
@@ -141,6 +144,7 @@ export const deletePost = async (req, res, next) => {
 			postId,
 		});
 	} catch (error) {
+		console.error("[post.controller:deletePost] Error:", error);
 		return next(error);
 	}
 };

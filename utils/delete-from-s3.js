@@ -15,12 +15,17 @@ export const deleteFromS3 = async (objectKey) => {
 		throw error;
 	}
 
-	await s3Client.send(
-		new DeleteObjectCommand({
-			Bucket: appConfig.awsBucketName,
-			Key: objectKey,
-		})
-	);
+	try {
+		await s3Client.send(
+			new DeleteObjectCommand({
+				Bucket: appConfig.awsBucketName,
+				Key: objectKey,
+			})
+		);
+	} catch (error) {
+		console.error("[delete-from-s3:deleteFromS3] Error:", error);
+		throw error;
+	}
 
 	return true;
 };
