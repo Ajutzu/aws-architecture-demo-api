@@ -1,5 +1,12 @@
-import { createPost as createPostRecord, deletePost as deletePostRecord, getPostById, getPosts as getPostRecords } from "../models/post.js";
-import { recordPostCreation } from "../middleware/rate-limiter.js";
+import {
+	createPost as createPostRecord,
+	deletePost as deletePostRecord,
+	getPostById,
+	getPosts as getPostRecords,
+	incrementPostDownvote,
+	incrementPostUpvote,
+} from "../models/post.js";
+import { recordPostCreation, recordPostVote } from "../middleware/rate-limiter.js";
 import { deleteFromS3 } from "../utils/delete-from-s3.js";
 import { formatDate } from "../utils/date-formater.js";
 import { getImageUrl } from "../utils/image-url.js";
@@ -148,3 +155,34 @@ export const deletePost = async (req, res, next) => {
 		return next(error);
 	}
 };
+
+const voteOnPost = async (req, res, next, action, incrementVote) => {
+	try {
+		const postId = Number.parseInt(req.params.id, 10);
+
+		if (!Number.isInteger(postId) || postId < 1) {
+			throw createHttpError("Post ID must be a positive integer.", 400);
+		}
+
+		const existingPost = await getPostById(postId);
+
+		if (!existingPost) {
+			throw createHttpError("Post not found.", 404);
+		}
+
+		const updatedPost = await incrementVote(postId);
+
+		recordPostVote(action, req.ip, postId);
+
+		return sendSuccess(res, 200, action === "upvote" ? "Post upvoted successfully." : "Post downvoted successfully.", {
+			post: formatPost(updatedPost),
+		});
+	} catch (error) {
+		console.error(`[post.controller:${action}Post] Error:`, error);
+		return next(error);
+	}
+};
+
+export const upvotePost = async (req, res, next) => voteOnPost(req, res, next, "upvote", incrementPostUpvote);
+
+export const downvotePost = async (req, res, next) => voteOnPost(req, res, next, "downvote", incrementPostDownvote);

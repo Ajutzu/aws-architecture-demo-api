@@ -74,3 +74,21 @@ export const deletePost = async (postId) => {
 
 	return queryResult.rowCount;
 };
+
+const incrementPostVote = async (postId, columnName) => {
+	const queryResult = await pool.query(
+		`
+			UPDATE post
+			SET ${columnName} = ${columnName} + 1
+			WHERE post_id = $1
+			RETURNING *
+		`,
+		[postId]
+	);
+
+	return queryResult.rows[0] || null;
+};
+
+export const incrementPostUpvote = async (postId) => incrementPostVote(postId, "post_upvote");
+
+export const incrementPostDownvote = async (postId) => incrementPostVote(postId, "post_downvote");

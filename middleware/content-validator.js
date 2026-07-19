@@ -16,6 +16,7 @@ const createValidationError = (message, details) => {
 // location, and category.
 
 export default function contentValidator(req, res, next) {
+	
 	const description = typeof req.body.description === "string" ? req.body.description.trim() : "";
 	const location = typeof req.body.location === "string" ? req.body.location.trim() : "";
 	const category = typeof req.body.category === "string" && req.body.category.trim() ? req.body.category.trim() : "General";
