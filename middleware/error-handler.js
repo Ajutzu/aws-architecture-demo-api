@@ -11,10 +11,12 @@ export default function errorHandler(err, req, res, next) {
 		return next(err);
 	}
 
-	const statusCode = err.statusCode || (err.code === "LIMIT_FILE_SIZE" ? 413 : 500);
+	const isFileSizeLimit = err.code === "LIMIT_FILE_SIZE";
+	const statusCode = err.statusCode || (isFileSizeLimit ? 413 : 500);
 	const message =
+		(isFileSizeLimit && err.message) ||
 		err.message ||
-		(err.code === "LIMIT_FILE_SIZE" ? "Uploads must not exceed 5 MB." : "Internal server error.");
+		(isFileSizeLimit ? "Image must be smaller than 5 MB." : "Internal server error.");
 	const details = err.details || undefined;
 
 	if (err.retryAfter) {

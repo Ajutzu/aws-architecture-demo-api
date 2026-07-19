@@ -1,5 +1,6 @@
 import multer from "multer";
-import { sendError } from "../utils/response.js";
+
+// multer configuration for handling file uploads
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -8,14 +9,21 @@ const upload = multer({
   },
 });
 
+// Middleware function to handle file uploads using multer. 
+// It processes the uploaded file and handles any errors that may occur
+//  during the upload process, such as exceeding the file size limit.
+
 export default (req, res, next) => {
   upload.single("image")(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === "LIMIT_FILE_SIZE") {
-        return sendError(res, 413, "Image must be smaller than 5 MB.");
+        err.statusCode = 413;
+        err.message = "Image must be smaller than 5 MB.";
+      } else {
+        err.statusCode = 400;
       }
 
-      return sendError(res, 400, err.message);
+      return next(err);
     }
 
     if (err) {
