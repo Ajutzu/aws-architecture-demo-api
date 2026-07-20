@@ -37,7 +37,7 @@ export const getPosts = async ({ page, limit, category }) => {
 			SELECT *
 			FROM post
 			${whereClause}
-			ORDER BY post_date DESC, post_id DESC
+			ORDER BY post_upvote DESC, post_date DESC, post_id DESC
 			LIMIT $${queryValues.length - 1}
 			OFFSET $${queryValues.length}
 		`,
