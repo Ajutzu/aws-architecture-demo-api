@@ -1,7 +1,9 @@
 // Variable for the time window in milliseconds (24 hours)
 
 const WINDOW_MS = 24 * 60 * 60 * 1000;
+const MAX_DELETIONS_PER_WINDOW = 3;
 const postCreationMap = new Map();
+const deletionMap = new Map();
 const voteMaps = {
 	upvote: new Map(),
 	downvote: new Map(),
@@ -36,7 +38,21 @@ const createVoteLimitError = (action) => {
 	return error;
 };
 
-// Removes expired entries from the postCreationMap based on the defined time window.
+// Creates a rate limit error for exceeding the deletion limit per IP address.
+
+const createDeleteLimitError = (retryAfterSeconds) => {
+	const error = new Error(`You can only delete ${MAX_DELETIONS_PER_WINDOW} posts per IP address every 24 hours.`);
+
+	error.statusCode = 429;
+	error.retryAfter = retryAfterSeconds;
+	error.details = {
+		retryAfterSeconds,
+	};
+
+	return error;
+};
+
+// Removes expired entries from the postCreationMap and deletionMap based on the defined time window.
 
 const pruneExpiredEntries = () => {
 	const now = Date.now();
@@ -44,6 +60,16 @@ const pruneExpiredEntries = () => {
 	for (const [ipAddress, timestamp] of postCreationMap.entries()) {
 		if (now - timestamp >= WINDOW_MS) {
 			postCreationMap.delete(ipAddress);
+		}
+	}
+
+	for (const [ipAddress, deletions] of deletionMap.entries()) {
+		const activeDeletions = deletions.filter((timestamp) => now - timestamp < WINDOW_MS);
+
+		if (activeDeletions.length === 0) {
+			deletionMap.delete(ipAddress);
+		} else {
+			deletionMap.set(ipAddress, activeDeletions);
 		}
 	}
 };
@@ -78,6 +104,21 @@ export const recordPostVote = (action, ipAddress, postId) => {
 	voteMap.set(getVoteKey(ipAddress, postId), Date.now());
 };
 
+// Records a post deletion for a given IP address.
+
+export const recordPostDeletion = (ipAddress) => {
+	if (!ipAddress) {
+		return;
+	}
+
+	if (!deletionMap.has(ipAddress)) {
+		deletionMap.set(ipAddress, []);
+	}
+
+	const deletions = deletionMap.get(ipAddress);
+	deletions.push(Date.now());
+};
+
 // Middleware factory that enforces one vote per IP per post for the given action.
 
 export const createVoteLimiter = (action) => (req, res, next) => {
@@ -97,6 +138,25 @@ export const createVoteLimiter = (action) => (req, res, next) => {
 
 	if (voteMap.has(voteKey)) {
 		return next(createVoteLimitError(action));
+	}
+
+	return next();
+};
+
+// Middleware function to enforce deletion rate limiting based on IP address.
+
+export const createDeleteLimiter = (req, res, next) => {
+	pruneExpiredEntries();
+
+	const ipAddress = req.ip;
+	const deletions = deletionMap.get(ipAddress);
+
+	if (deletions && deletions.length >= MAX_DELETIONS_PER_WINDOW) {
+		const oldestDeletion = deletions[0];
+		const retryAfterMs = WINDOW_MS - (Date.now() - oldestDeletion);
+		const retryAfterSeconds = Math.ceil(retryAfterMs / 1000);
+
+		return next(createDeleteLimitError(retryAfterSeconds));
 	}
 
 	return next();

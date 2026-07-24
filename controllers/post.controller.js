@@ -6,7 +6,7 @@ import {
 	incrementPostDownvote,
 	incrementPostUpvote,
 } from "../models/post.js";
-import { recordPostCreation, recordPostVote } from "../middleware/rate-limiter.js";
+import { recordPostCreation, recordPostDeletion, recordPostVote } from "../middleware/rate-limiter.js";
 import { deleteFromS3 } from "../utils/delete-from-s3.js";
 import { formatDate } from "../utils/date-formater.js";
 import { getImageUrl } from "../utils/image-url.js";
@@ -146,6 +146,8 @@ export const deletePost = async (req, res, next) => {
 		}
 
 		await deletePostRecord(postId);
+
+		recordPostDeletion(req.ip);
 
 		return sendSuccess(res, 200, "Post deleted successfully.", {
 			postId,
